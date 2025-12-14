@@ -32,25 +32,118 @@ Startet Claude Code im bypass permissions mode:
 
 Falls du einen kürzeren Alias möchtest:
 
-**Bash/Zsh (~/.bashrc oder ~/.zshrc):**
+#### WSL (Windows Subsystem for Linux) - Detailliert
+
+**1. Aktuelle Shell prüfen:**
 ```bash
-alias c='claude --dsp'
-alias cdsp='claude --dsp'
+echo $SHELL
+# Ausgabe: /bin/bash (Standard) oder /bin/zsh
 ```
 
-**Fish (~/.config/fish/config.fish):**
+**2a. Methode: .bash_aliases verwenden (empfohlen)**
+
+Diese Methode ist sauberer, da .bashrc nicht direkt bearbeitet wird:
+
+```bash
+# .bash_aliases erstellen/öffnen
+nano ~/.bash_aliases
+
+# Diese Zeilen hinzufügen:
+alias c='claude --dsp'
+alias cdsp='claude --dsp'
+
+# Speichern: Ctrl+O, Enter, dann Ctrl+X
+
+# Aktivieren
+source ~/.bashrc
+```
+
+**2b. Alternative: Direkt in .bashrc**
+
+```bash
+# .bashrc öffnen
+nano ~/.bashrc
+
+# Ans Ende der Datei hinzufügen:
+# Claude Code Aliases
+alias c='claude --dsp'
+alias cdsp='claude --dsp'
+
+# Speichern: Ctrl+O, Enter, dann Ctrl+X
+
+# Aktivieren
+source ~/.bashrc
+```
+
+**3. Testen:**
+```bash
+# Neues Terminal öffnen oder:
+source ~/.bashrc
+
+# Testen
+c --version    # Sollte Claude Code Version anzeigen
+```
+
+**Hinweise für WSL:**
+- Die .bashrc liegt unter: `~/.bashrc` bzw. `/home/DEIN_USERNAME/.bashrc`
+- Windows-Pfad: `C:\Users\WINDOWS_USER\AppData\Local\Packages\...\LocalState\rootfs\home\USERNAME\.bashrc`
+- WSL führt `.bashrc` automatisch bei jedem Terminal-Start aus
+- `.bash_profile` wird in WSL **nicht** ausgeführt - nur `.bashrc` verwenden
+
+#### Linux (Bash/Zsh)
+
+**Bash (~/.bashrc):**
+```bash
+echo "alias c='claude --dsp'" >> ~/.bashrc
+echo "alias cdsp='claude --dsp'" >> ~/.bashrc
+source ~/.bashrc
+```
+
+**Zsh (~/.zshrc):**
+```bash
+echo "alias c='claude --dsp'" >> ~/.zshrc
+echo "alias cdsp='claude --dsp'" >> ~/.zshrc
+source ~/.zshrc
+```
+
+#### macOS
+
+**Bash (~/.bash_profile oder ~/.bashrc):**
+```bash
+echo "alias c='claude --dsp'" >> ~/.bash_profile
+echo "alias cdsp='claude --dsp'" >> ~/.bash_profile
+source ~/.bash_profile
+```
+
+**Zsh (~/.zshrc) - Standard ab macOS Catalina:**
+```bash
+echo "alias c='claude --dsp'" >> ~/.zshrc
+echo "alias cdsp='claude --dsp'" >> ~/.zshrc
+source ~/.zshrc
+```
+
+#### Termux (Android)
+
+**Bash (~/.bashrc):**
+```bash
+echo "alias c='claude --dsp'" >> ~/.bashrc
+echo "alias cdsp='claude --dsp'" >> ~/.bashrc
+source ~/.bashrc
+```
+
+#### Fish Shell (~/.config/fish/config.fish)
+
 ```fish
-alias c='claude --dsp'
-alias cdsp='claude --dsp'
+# Für alle Plattformen
+echo "alias c='claude --dsp'" >> ~/.config/fish/config.fish
+echo "alias cdsp='claude --dsp'" >> ~/.config/fish/config.fish
+source ~/.config/fish/config.fish
 ```
 
-Nach dem Hinzufügen:
-```bash
-source ~/.bashrc  # oder ~/.zshrc / ~/.config/fish/config.fish
-```
+#### Verwendung nach Setup
 
-Dann kannst du einfach verwenden:
 ```bash
 c              # Statt: claude --dsp
 cdsp           # Statt: claude --dsp
+c --version    # Claude Version anzeigen
 ```
