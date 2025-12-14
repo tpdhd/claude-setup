@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/data/data/com.termux/files/home/.claude-synth-3.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
