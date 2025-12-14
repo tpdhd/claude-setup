@@ -4,14 +4,22 @@
 
 ### Verwendung
 
+**Standard-Befehl (eingebaut):**
+```bash
+claude --dangerously-skip-permissions
+```
+
+**Kurzform `--dsp` (muss selbst erstellt werden):**
 ```bash
 claude --dsp
 ```
 
-**Was ist `--dsp`?**
-- `--dsp` ist eine **eingebaute Kurzform** in Claude Code
-- Vollständiger Befehl: `claude --dangerously-skip-permissions`
-- **Kein manuelles Setup nötig** - funktioniert sofort nach Claude Code Installation
+**⚠️ WICHTIG: `--dsp` ist NICHT standardmäßig verfügbar!**
+
+- ❌ `claude --dsp` funktioniert **NICHT** out-of-the-box
+- ✅ Nur `claude --dangerously-skip-permissions` ist eingebaut
+- 🛠️ `--dsp` ist ein **Shell-Alias**, den du **selbst erstellen musst**
+- Diese Anleitung zeigt, wie du die Kurzform `--dsp` in deine CLI einbaust
 
 ### Funktion
 
@@ -28,9 +36,11 @@ Startet Claude Code im bypass permissions mode:
   - Shell-Befehle (bash, git, npm, etc.)
   - Netzwerkzugriff (curl, wget, etc.)
 
-### Optional: Shell-Alias erstellen
+### Shell-Alias erstellen (ERFORDERLICH für --dsp)
 
-Falls du einen kürzeren Alias möchtest:
+**So erstellst du die Kurzform `--dsp`:**
+
+Die folgenden Anleitungen zeigen, wie du `claude --dsp` als Alias einrichtest, damit du nicht jedes Mal den langen Befehl `claude --dangerously-skip-permissions` tippen musst.
 
 #### WSL (Windows Subsystem for Linux) - Detailliert
 
@@ -48,9 +58,12 @@ Diese Methode ist sauberer, da .bashrc nicht direkt bearbeitet wird:
 # .bash_aliases erstellen/öffnen
 nano ~/.bash_aliases
 
-# Diese Zeilen hinzufügen:
-alias c='claude --dsp'
-alias cdsp='claude --dsp'
+# Diese Zeile hinzufügen (WICHTIG: Den vollen Befehl verwenden!):
+alias dsp='claude --dangerously-skip-permissions'
+
+# Optional: Weitere Kurzformen
+alias c='claude --dangerously-skip-permissions'
+alias cdsp='claude --dangerously-skip-permissions'
 
 # Speichern: Ctrl+O, Enter, dann Ctrl+X
 
@@ -66,8 +79,9 @@ nano ~/.bashrc
 
 # Ans Ende der Datei hinzufügen:
 # Claude Code Aliases
-alias c='claude --dsp'
-alias cdsp='claude --dsp'
+alias dsp='claude --dangerously-skip-permissions'
+alias c='claude --dangerously-skip-permissions'
+alias cdsp='claude --dangerously-skip-permissions'
 
 # Speichern: Ctrl+O, Enter, dann Ctrl+X
 
@@ -80,8 +94,13 @@ source ~/.bashrc
 # Neues Terminal öffnen oder:
 source ~/.bashrc
 
-# Testen
-c --version    # Sollte Claude Code Version anzeigen
+# Jetzt funktioniert die Kurzform:
+dsp            # = claude --dangerously-skip-permissions
+c              # = claude --dangerously-skip-permissions
+cdsp           # = claude --dangerously-skip-permissions
+
+# Verifizieren:
+type dsp       # Sollte zeigen: dsp is aliased to `claude --dangerously-skip-permissions'
 ```
 
 **Hinweise für WSL:**
@@ -94,15 +113,17 @@ c --version    # Sollte Claude Code Version anzeigen
 
 **Bash (~/.bashrc):**
 ```bash
-echo "alias c='claude --dsp'" >> ~/.bashrc
-echo "alias cdsp='claude --dsp'" >> ~/.bashrc
+echo "alias dsp='claude --dangerously-skip-permissions'" >> ~/.bashrc
+echo "alias c='claude --dangerously-skip-permissions'" >> ~/.bashrc
+echo "alias cdsp='claude --dangerously-skip-permissions'" >> ~/.bashrc
 source ~/.bashrc
 ```
 
 **Zsh (~/.zshrc):**
 ```bash
-echo "alias c='claude --dsp'" >> ~/.zshrc
-echo "alias cdsp='claude --dsp'" >> ~/.zshrc
+echo "alias dsp='claude --dangerously-skip-permissions'" >> ~/.zshrc
+echo "alias c='claude --dangerously-skip-permissions'" >> ~/.zshrc
+echo "alias cdsp='claude --dangerously-skip-permissions'" >> ~/.zshrc
 source ~/.zshrc
 ```
 
@@ -110,15 +131,17 @@ source ~/.zshrc
 
 **Bash (~/.bash_profile oder ~/.bashrc):**
 ```bash
-echo "alias c='claude --dsp'" >> ~/.bash_profile
-echo "alias cdsp='claude --dsp'" >> ~/.bash_profile
+echo "alias dsp='claude --dangerously-skip-permissions'" >> ~/.bash_profile
+echo "alias c='claude --dangerously-skip-permissions'" >> ~/.bash_profile
+echo "alias cdsp='claude --dangerously-skip-permissions'" >> ~/.bash_profile
 source ~/.bash_profile
 ```
 
 **Zsh (~/.zshrc) - Standard ab macOS Catalina:**
 ```bash
-echo "alias c='claude --dsp'" >> ~/.zshrc
-echo "alias cdsp='claude --dsp'" >> ~/.zshrc
+echo "alias dsp='claude --dangerously-skip-permissions'" >> ~/.zshrc
+echo "alias c='claude --dangerously-skip-permissions'" >> ~/.zshrc
+echo "alias cdsp='claude --dangerously-skip-permissions'" >> ~/.zshrc
 source ~/.zshrc
 ```
 
@@ -126,8 +149,9 @@ source ~/.zshrc
 
 **Bash (~/.bashrc):**
 ```bash
-echo "alias c='claude --dsp'" >> ~/.bashrc
-echo "alias cdsp='claude --dsp'" >> ~/.bashrc
+echo "alias dsp='claude --dangerously-skip-permissions'" >> ~/.bashrc
+echo "alias c='claude --dangerously-skip-permissions'" >> ~/.bashrc
+echo "alias cdsp='claude --dangerously-skip-permissions'" >> ~/.bashrc
 source ~/.bashrc
 ```
 
@@ -135,15 +159,28 @@ source ~/.bashrc
 
 ```fish
 # Für alle Plattformen
-echo "alias c='claude --dsp'" >> ~/.config/fish/config.fish
-echo "alias cdsp='claude --dsp'" >> ~/.config/fish/config.fish
+echo "alias dsp='claude --dangerously-skip-permissions'" >> ~/.config/fish/config.fish
+echo "alias c='claude --dangerously-skip-permissions'" >> ~/.config/fish/config.fish
+echo "alias cdsp='claude --dangerously-skip-permissions'" >> ~/.config/fish/config.fish
 source ~/.config/fish/config.fish
 ```
 
 #### Verwendung nach Setup
 
+Nach der Einrichtung kannst du die Kurzformen verwenden:
+
 ```bash
-c              # Statt: claude --dsp
-cdsp           # Statt: claude --dsp
+dsp            # = claude --dangerously-skip-permissions
+c              # = claude --dangerously-skip-permissions
+cdsp           # = claude --dangerously-skip-permissions
+
+# Beispiele:
+dsp            # Startet Claude im dangerously-skip-permissions Modus
 c --version    # Claude Version anzeigen
+cdsp           # Alternativer Alias
+```
+
+**Hinweis:** Ohne diese Alias-Einrichtung musst du den vollen Befehl verwenden:
+```bash
+claude --dangerously-skip-permissions
 ```
