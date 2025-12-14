@@ -15,16 +15,27 @@ claude --version
 
 ## Linux (Debian/Ubuntu)
 
+**Option 1: Einfach (empfohlen für Anfänger)**
 ```bash
-# Node.js & npm installieren
-curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-sudo apt-get install -y nodejs
+# Node.js & npm aus Ubuntu-Repository
+sudo apt update
+sudo apt install -y nodejs npm
 
 # Claude Code installieren
 npm install -g @anthropic-ai/claude-code
 
 # Verifizieren
 claude --version
+```
+
+**Option 2: Neueste LTS (für aktuelle Version)**
+```bash
+# NodeSource Repository hinzufügen (benötigt curl)
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Claude Code installieren
+npm install -g @anthropic-ai/claude-code
 ```
 
 ## macOS
@@ -42,16 +53,27 @@ claude --version
 
 ## WSL (Windows Subsystem for Linux)
 
+**Option 1: Einfach (empfohlen)**
 ```bash
 # Node.js & npm installieren
-curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-sudo apt-get install -y nodejs
+sudo apt update
+sudo apt install -y nodejs npm
 
 # Claude Code installieren
 npm install -g @anthropic-ai/claude-code
 
 # Verifizieren
 claude --version
+```
+
+**Option 2: Neueste LTS**
+```bash
+# NodeSource Repository (benötigt curl)
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Claude Code installieren
+npm install -g @anthropic-ai/claude-code
 ```
 
 ## Erste Schritte
