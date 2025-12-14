@@ -6,10 +6,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/data/data/com.termux/files/home/.claude-synth-3.sh"
+            "command": "$HOME/.claude-synth-3.sh"
           }
         ]
       }
     ]
-  }
+  },
+  "_comment": "Copy sound scripts to $HOME and adjust paths accordingly"
 }
