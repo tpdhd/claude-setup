@@ -1,2 +1,2 @@
-# Claude Code Sound Hooks
-Sound notification system for Claude Code using Stop hooks - plays synthesized tones when tasks complete. Copy scripts to home directory and merge settings into `~/.claude/settings.json`.
+# Claude Code Setup
+Complete setup guide for Claude Code including installation, Git configuration, commands, and sound notification hooks. Essential resource for new Claude instances on Termux/WSL/Linux.
