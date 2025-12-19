@@ -150,6 +150,86 @@ claude
 
 ---
 
+# Installation für Arch Linux
+
+## Schritt 1: Prüfe ob Node.js installiert ist
+
+```bash
+node --version
+```
+
+**Fall A:** Version wird angezeigt → Springe zu Schritt 3
+**Fall B:** `command not found` → Mache Schritt 2
+
+## Schritt 2: Installiere Node.js und npm
+
+**Methode mit pacman (empfohlen):**
+
+```bash
+sudo pacman -Syu
+```
+**Was passiert:** System wird aktualisiert
+
+```bash
+sudo pacman -S nodejs npm
+```
+**Was passiert:** Node.js und npm werden installiert
+
+**Verifiziere die Installation:**
+```bash
+node --version
+npm --version
+```
+
+**Erwartete Ausgabe:**
+```
+v20.10.0    (oder höher)
+10.2.0      (oder höher)
+```
+
+✅ **Wenn du Versionen siehst:** Installation erfolgreich!
+❌ **Wenn Fehler:** Wiederhole Schritt 2
+
+## Schritt 3: Installiere Claude Code
+
+```bash
+npm install -g @anthropic-ai/claude-code
+```
+
+**Was passiert:**
+- npm lädt Claude Code herunter
+- `-g` bedeutet "global" = überall verfügbar
+- Dauert 1-2 Minuten
+
+**Erwartete Ausgabe:**
+```
+added 523 packages in 45s
+```
+
+## Schritt 4: Verifiziere Claude Code Installation
+
+```bash
+claude --version
+```
+
+**Erwartete Ausgabe:**
+```
+2.0.69    (oder höher)
+```
+
+✅ **Wenn du eine Version siehst:** Claude Code ist installiert!
+❌ **Wenn `command not found`:** Wiederhole Schritt 3
+
+## Schritt 5: Starte Claude Code
+
+```bash
+claude
+```
+
+**Was passiert:** Claude Code startet im interaktiven Modus
+
+---
+
 # Installation für Termux (Android)
 
 ## Schritt 1: Prüfe ob Node.js installiert ist
