@@ -275,6 +275,164 @@ claude
 
 ---
 
+# Installation für Ubuntu on Android (Userland)
+
+## Problem: Veraltete Versionen
+
+Ubuntu auf Android (via Userland) hat oft **sehr alte** Node.js Versionen in den Standard-Repositories:
+
+```bash
+sudo apt install nodejs npm
+node --version
+# Ausgabe: v10.19.0  ❌ ZU ALT!
+```
+
+**WICHTIG:** Diese alten Versionen funktionieren NICHT mit Claude Code!
+
+## Lösung 1: NodeSource Repository (Empfohlen)
+
+Diese Methode installiert die neueste offizielle Node.js Version.
+
+### Schritt 1: Installiere curl
+
+```bash
+sudo apt-get update
+sudo apt-get install -y curl
+```
+
+### Schritt 2: Füge NodeSource Repository hinzu und installiere Node.js
+
+**Für Node.js 20.x (LTS - Empfohlen):**
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
+
+**Oder für Node.js 22.x (Neueste Version):**
+```bash
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
+
+### Schritt 3: Verifiziere Installation
+
+```bash
+node --version
+npm --version
+```
+
+**Erwartete Ausgabe:**
+```
+v20.11.0    (oder höher) ✅
+10.2.4      (oder höher) ✅
+```
+
+### Schritt 4: Installiere Claude Code
+
+```bash
+npm install -g @anthropic-ai/claude-code
+```
+
+### Schritt 5: Verifiziere und starte
+
+```bash
+claude --version
+claude
+```
+
+---
+
+## Lösung 2: nvm (Node Version Manager)
+
+Diese Methode erlaubt das Installieren und Wechseln zwischen mehreren Node.js Versionen.
+
+### Schritt 1: Installiere nvm
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+```
+
+### Schritt 2: Lade Shell-Konfiguration neu
+
+```bash
+source ~/.bashrc
+```
+
+**Oder schließe das Terminal und öffne es neu.**
+
+### Schritt 3: Installiere Node.js mit nvm
+
+**Neueste LTS Version (Empfohlen):**
+```bash
+nvm install --lts
+```
+
+**Oder spezifische Version:**
+```bash
+nvm install 20
+```
+
+### Schritt 4: Setze Default-Version
+
+```bash
+nvm alias default 20
+```
+
+### Schritt 5: Verifiziere Installation
+
+```bash
+node --version
+npm --version
+```
+
+**Erwartete Ausgabe:**
+```
+v20.11.0    (oder höher) ✅
+10.2.4      (oder höher) ✅
+```
+
+### Schritt 6: Installiere Claude Code
+
+```bash
+npm install -g @anthropic-ai/claude-code
+```
+
+### Schritt 7: Verifiziere und starte
+
+```bash
+claude --version
+claude
+```
+
+---
+
+## nvm Zusatz-Befehle (Optional)
+
+Wenn du nvm verwendest, kannst du zwischen Node.js Versionen wechseln:
+
+**Liste installierte Versionen:**
+```bash
+nvm list
+```
+
+**Liste verfügbare Versionen:**
+```bash
+nvm list-remote
+```
+
+**Wechsle zu anderer Version:**
+```bash
+nvm use 18
+nvm use 20
+```
+
+**Installiere weitere Version:**
+```bash
+nvm install 18
+```
+
+---
+
 # Installation für macOS
 
 ## Schritt 1: Prüfe ob Homebrew installiert ist
