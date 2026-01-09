@@ -38,7 +38,19 @@ which claude
 - macOS: `/usr/local/bin/claude` or `/Users/username/.npm-global/bin/claude`
 - Termux: `/data/data/com.termux/files/usr/bin/claude`
 
-**Save this path - you need it for all following steps.**
+**Important: Check if it's a symlink:**
+```bash
+ls -l $(which claude)
+```
+
+If it shows a symlink (arrow `->` pointing to another file), get the actual file path:
+```bash
+readlink -f $(which claude)
+```
+
+Example: If `which claude` returns `/home/user/.npm-global/bin/claude` but it's a symlink to `../lib/node_modules/@anthropic-ai/claude-code/cli.js`, then the actual path you need is `/home/user/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js`
+
+**Save the actual file path - you need it for all following steps.**
 
 For this guide, we'll use the placeholder: `<CLAUDE_PATH>`
 
@@ -94,17 +106,17 @@ sed -i 's/.option("--dangerously-skip-permissions","Bypass all permission checks
 
 **What to find:**
 ```javascript
-{debug:W=!1,debugToStderr:K=!1,dangerouslySkipPermissions:V,allowDangerouslySkipPermissions:H=!1
+let{debug:D=!1,debugToStderr:W=!1,dangerouslySkipPermissions:K,allowDangerouslySkipPermissions:V=!1
 ```
 
 **What to replace it with:**
 ```javascript
-{debug:W=!1,debugToStderr:K=!1,dangerouslySkipPermissions:V,dsp:dspFlag,allowDangerouslySkipPermissions:H=!1
+let{debug:D=!1,debugToStderr:W=!1,dangerouslySkipPermissions:K,dsp:dspFlag,allowDangerouslySkipPermissions:V=!1
 ```
 
 **Command to execute:**
 ```bash
-sed -i 's/{debug:W=!1,debugToStderr:K=!1,dangerouslySkipPermissions:V,allowDangerouslySkipPermissions:H=!1/{debug:W=!1,debugToStderr:K=!1,dangerouslySkipPermissions:V,dsp:dspFlag,allowDangerouslySkipPermissions:H=!1/g' <CLAUDE_PATH>
+sed -i 's/let{debug:D=!1,debugToStderr:W=!1,dangerouslySkipPermissions:K,allowDangerouslySkipPermissions:V=!1/let{debug:D=!1,debugToStderr:W=!1,dangerouslySkipPermissions:K,dsp:dspFlag,allowDangerouslySkipPermissions:V=!1/g' <CLAUDE_PATH>
 ```
 
 ---
@@ -113,17 +125,17 @@ sed -i 's/{debug:W=!1,debugToStderr:K=!1,dangerouslySkipPermissions:V,allowDange
 
 **What to find:**
 ```javascript
-let{mode:uA,notification:GA}=LD9({permissionModeCli:$,dangerouslySkipPermissions:V})
+}=I,x=I.agents,m=I.agent;
 ```
 
 **What to replace it with:**
 ```javascript
-V=V||dspFlag;let{mode:uA,notification:GA}=LD9({permissionModeCli:$,dangerouslySkipPermissions:V})
+}=I;K=K||dspFlag;let x=I.agents,m=I.agent;
 ```
 
 **Command to execute:**
 ```bash
-sed -i 's/let{mode:uA,notification:GA}=LD9({permissionModeCli:\$,dangerouslySkipPermissions:V})/V=V||dspFlag;let{mode:uA,notification:GA}=LD9({permissionModeCli:$,dangerouslySkipPermissions:V})/g' <CLAUDE_PATH>
+sed -i 's/}=I,x=I.agents,m=I.agent;/}=I;K=K||dspFlag;let x=I.agents,m=I.agent;/g' <CLAUDE_PATH>
 ```
 
 ---
@@ -183,8 +195,8 @@ Both flags should work identically.
 **For quick implementation, run all commands together:**
 
 ```bash
-# Step 1: Find Claude location
-CLAUDE_PATH=$(which claude)
+# Step 1: Find Claude location (follow symlinks)
+CLAUDE_PATH=$(readlink -f $(which claude) 2>/dev/null || which claude)
 echo "Claude found at: $CLAUDE_PATH"
 
 # Step 2: Create backup
@@ -194,9 +206,9 @@ echo "Backup created at: $CLAUDE_PATH.backup"
 # Step 3: Apply all three changes
 sed -i 's/.option("--dangerously-skip-permissions","Bypass all permission checks. Recommended only for sandboxes with no internet access.",()=>!0)/.option("--dangerously-skip-permissions","Bypass all permission checks. Recommended only for sandboxes with no internet access.",()=>!0).option("--dsp","Shorthand for --dangerously-skip-permissions.",()=>!0)/g' "$CLAUDE_PATH"
 
-sed -i 's/{debug:W=!1,debugToStderr:K=!1,dangerouslySkipPermissions:V,allowDangerouslySkipPermissions:H=!1/{debug:W=!1,debugToStderr:K=!1,dangerouslySkipPermissions:V,dsp:dspFlag,allowDangerouslySkipPermissions:H=!1/g' "$CLAUDE_PATH"
+sed -i 's/let{debug:D=!1,debugToStderr:W=!1,dangerouslySkipPermissions:K,allowDangerouslySkipPermissions:V=!1/let{debug:D=!1,debugToStderr:W=!1,dangerouslySkipPermissions:K,dsp:dspFlag,allowDangerouslySkipPermissions:V=!1/g' "$CLAUDE_PATH"
 
-sed -i 's/let{mode:uA,notification:GA}=LD9({permissionModeCli:\$,dangerouslySkipPermissions:V})/V=V||dspFlag;let{mode:uA,notification:GA}=LD9({permissionModeCli:$,dangerouslySkipPermissions:V})/g' "$CLAUDE_PATH"
+sed -i 's/}=I,x=I.agents,m=I.agent;/}=I;K=K||dspFlag;let x=I.agents,m=I.agent;/g' "$CLAUDE_PATH"
 
 # Step 4: Verify
 echo "Verifying changes..."
@@ -253,9 +265,9 @@ echo "test" | claude --dsp -p "what is 1+1?"
 
 2. Verify Change 3 was applied:
    ```bash
-   grep -o "V=V||dspFlag" <CLAUDE_PATH>
+   grep -o "K=K||dspFlag" <CLAUDE_PATH>
    ```
-   Should output: `V=V||dspFlag`
+   Should output: `K=K||dspFlag`
 
 3. If either is missing, restore backup and re-apply all changes
 
@@ -292,9 +304,9 @@ Should show nothing (flag removed).
 - Must match the flag name exactly (dsp = dsp)
 
 **Change 3:** Combines both flags using OR operator
-- `V=V||dspFlag` means: "If --dangerously-skip-permissions is set, use it; otherwise use --dsp"
-- Both flags affect the same variable `V`
-- Variable `V` controls permission bypass mode
+- `K=K||dspFlag` means: "If --dangerously-skip-permissions is set, use it; otherwise use --dsp"
+- Both flags affect the same variable `K`
+- Variable `K` controls permission bypass mode
 
 ---
 
