@@ -1,284 +1,186 @@
-# Claude Code Befehle - Einfache Anleitung
+# Claude Code Commands Reference
 
-## Problem: Der lange Befehl
+## Quick Reference
 
-Claude Code hat einen sehr langen Befehl:
-```bash
-claude --dangerously-skip-permissions
-```
-
-Dieser Befehl ist lang und nervt beim Tippen.
-
-## Lösung: Einen kurzen Alias erstellen
-
-Wir erstellen einen **Alias** (Abkürzung), damit wir stattdessen nur schreiben:
-```bash
-dsp
-```
-
-## WICHTIG ZU VERSTEHEN:
-
-1. **Was FUNKTIONIERT ohne Setup:**
-   ```bash
-   claude --dangerously-skip-permissions
-   ```
-   ✅ Dieser Befehl funktioniert SOFORT nach Claude Installation
-
-2. **Was NICHT FUNKTIONIERT ohne Setup:**
-   ```bash
-   claude --dsp
-   dsp
-   c
-   ```
-   ❌ Diese Befehle funktionieren NICHT automatisch
-   ❌ Du MUSST sie erst erstellen (siehe unten)
-
-## Was macht der Befehl?
+### Standard Commands
 
 ```bash
-claude --dangerously-skip-permissions
+claude                                       # Start interactive mode
+claude --dsp                                # Start with dangerously-skip-permissions (if configured)
+claude --dangerously-skip-permissions       # Start without permission prompts
+claude --version                            # Show version
+claude --help                               # Show help
 ```
 
-Dieser Befehl startet Claude Code und:
-- Überspringt ALLE Berechtigungsfragen
-- Claude darf ALLES machen ohne zu fragen
-- ⚠️ Nur in sicheren Projekten verwenden!
+### Non-Interactive Mode
+
+```bash
+echo "input" | claude -p "your prompt"                           # Basic usage
+echo "input" | claude --dsp -p "your prompt"                     # With --dsp flag
+cat file.txt | claude -p "summarize this"                        # Process file content
+claude -p "create a hello world script" > script.sh              # Save output to file
+```
 
 ---
 
-# Schritt-für-Schritt: Alias erstellen
+## --dsp Flag Setup
 
-## Für WSL (Windows Subsystem for Linux)
+The `--dsp` flag is a shorthand for `--dangerously-skip-permissions`. It's not built-in and must be configured.
 
-### Schritt 1: Prüfe deine Shell
+**See:** [DSP-FLAG-IMPLEMENTATION.md](./DSP-FLAG-IMPLEMENTATION.md) for complete setup instructions.
 
-```bash
-echo $SHELL
-```
-
-**Erwartete Ausgabe:**
-- `/bin/bash` → Du hast Bash (Standard)
-- `/bin/zsh` → Du hast Zsh
-
-**Für diese Anleitung:** Wir nehmen an, du hast **Bash**.
-
-### Schritt 2: Öffne die Konfigurationsdatei
+### Quick Setup (Bash Function Method)
 
 ```bash
-nano ~/.bash_aliases
-```
+cat >> ~/.bashrc << 'EOF'
 
-**Was passiert:** Ein Text-Editor öffnet sich.
+# Claude wrapper function to expand --dsp to --dangerously-skip-permissions
+claude() {
+    local args=()
+    for arg in "$@"; do
+        if [ "$arg" = "--dsp" ]; then
+            args+=("--dangerously-skip-permissions")
+        else
+            args+=("$arg")
+        fi
+    done
+    command claude "${args[@]}"
+}
+EOF
 
-### Schritt 3: Füge diese EXAKTE Zeile ein
-
-Kopiere und füge diese Zeile ein:
-
-```bash
-alias dsp='claude --dangerously-skip-permissions'
-```
-
-**Erklärung:**
-- `alias` = Erstelle eine Abkürzung
-- `dsp` = Der neue kurze Befehl
-- `'claude --dangerously-skip-permissions'` = Der echte lange Befehl
-
-### Schritt 4: Speichere die Datei
-
-1. Drücke `Ctrl + O` (Speichern)
-2. Drücke `Enter` (Bestätigen)
-3. Drücke `Ctrl + X` (Schließen)
-
-### Schritt 5: Aktiviere den Alias
-
-```bash
 source ~/.bashrc
 ```
 
-**Was passiert:** Deine Shell lädt die neuen Einstellungen.
+---
 
-### Schritt 6: Teste den Alias
+## Additional Custom Shortcuts (Optional)
 
-```bash
-dsp
-```
+You can create standalone command aliases if you want shortcuts that aren't flag expansions:
 
-**Erwartete Ausgabe:** Claude Code startet im dangerously-skip-permissions Modus.
+### Bash/Zsh Aliases
 
-### Schritt 7: Verifiziere (Optional)
+Add to `~/.bashrc` or `~/.zshrc`:
 
 ```bash
-type dsp
+# Standalone shortcuts (different from --dsp flag expansion)
+alias c='claude --dangerously-skip-permissions'         # Quick start
+alias cdsp='claude --dangerously-skip-permissions'      # Alternative shortcut
 ```
 
-**Erwartete Ausgabe:**
-```
-dsp is aliased to `claude --dangerously-skip-permissions'
+**Note:** These create new commands (`c`, `cdsp`), not flag expansions. They work differently than the `--dsp` flag method.
+
+**Comparison:**
+```bash
+# With bash function method (expands --dsp flag)
+claude --dsp -p "hello"                    # Works
+some-script.sh | claude --dsp              # Works
+
+# With alias method (creates new command)
+c -p "hello"                               # Works
+cdsp -p "hello"                            # Works
+claude --dsp -p "hello"                    # Doesn't work (--dsp not recognized)
 ```
 
-✅ **Wenn du das siehst:** Der Alias funktioniert!
-❌ **Wenn Fehler:** Wiederhole Schritt 2-5
+Choose based on your preference:
+- **Bash function method:** Adds `--dsp` as a real flag to `claude` command
+- **Alias method:** Creates new shortcut commands
 
 ---
 
-## Für Linux
+## Git Commands Integration
 
-### Schritt 1: Öffne die Konfigurationsdatei
+After making changes with Claude:
 
 ```bash
-nano ~/.bashrc
+git status                          # Check what changed
+git diff                            # See detailed changes
+git add .                           # Stage all changes
+git commit -m "description"         # Commit changes
+git push                            # Push to remote
 ```
 
-### Schritt 2: Gehe ans Ende der Datei
-
-1. Drücke `Ctrl + End` oder scrolle nach unten
-2. Füge diese Zeile ein:
-
+For commits:
 ```bash
-alias dsp='claude --dangerously-skip-permissions'
-```
-
-### Schritt 3: Speichere und schließe
-
-1. Drücke `Ctrl + O`, dann `Enter`
-2. Drücke `Ctrl + X`
-
-### Schritt 4: Aktiviere
-
-```bash
-source ~/.bashrc
-```
-
-### Schritt 5: Teste
-
-```bash
-dsp
+# Let Claude help with commit messages
+git diff | claude --dsp -p "write a concise commit message for these changes"
 ```
 
 ---
 
-## Für Termux (Android)
+## Useful Patterns
 
-**EXAKTE BEFEHLE - Kopiere sie nacheinander:**
+### Process Multiple Files
 
 ```bash
-echo "alias dsp='claude --dangerously-skip-permissions'" >> ~/.bashrc
+for file in *.txt; do
+    claude --dsp -p "summarize $file" < "$file" > "${file%.txt}_summary.txt"
+done
 ```
 
+### Chain Commands
+
 ```bash
-source ~/.bashrc
+echo "write a Python function to calculate fibonacci" | \
+  claude --dsp -p "generate code" | \
+  tee fib.py | \
+  python3
 ```
 
-```bash
-dsp
-```
-
-**Was passiert:**
-1. Befehl 1: Schreibt den Alias in die Konfigurationsdatei
-2. Befehl 2: Lädt die Konfiguration neu
-3. Befehl 3: Testet den Alias
-
----
-
-## Für macOS
-
-### Wenn du Bash hast:
+### Interactive Script
 
 ```bash
-echo "alias dsp='claude --dangerously-skip-permissions'" >> ~/.bash_profile
-source ~/.bash_profile
-dsp
-```
-
-### Wenn du Zsh hast (Standard ab macOS Catalina):
-
-```bash
-echo "alias dsp='claude --dangerously-skip-permissions'" >> ~/.zshrc
-source ~/.zshrc
-dsp
+#!/bin/bash
+read -p "Enter your question: " question
+echo "$question" | claude --dsp -p "answer concisely"
 ```
 
 ---
 
-# Zusammenfassung
+## Account Switching (if configured)
 
-## VORHER (ohne Alias):
+If you have multiple Claude accounts set up:
 
-Du musst jedes Mal tippen:
 ```bash
-claude --dangerously-skip-permissions
+ca1    # Switch to account 1
+ca2    # Switch to account 2
 ```
 
-## NACHHER (mit Alias):
-
-Du tippst nur:
-```bash
-dsp
-```
-
-## Beide Befehle machen EXAKT das Gleiche!
-
-Der Alias `dsp` ist nur eine **Abkürzung** für den langen Befehl.
+See [GIT_SETUP.md](./GIT_SETUP.md) for account switching configuration.
 
 ---
 
-# Häufige Fehler
+## Common Issues
 
-## Fehler 1: "dsp: command not found"
+### "claude: command not found"
 
-**Problem:** Der Alias wurde nicht richtig erstellt.
+**Problem:** Claude Code not installed or not in PATH
 
-**Lösung:**
+**Solution:**
 ```bash
-type dsp
+npm install -g @anthropic-ai/claude-code
+# or
+npm update -g @anthropic-ai/claude-code
 ```
 
-Wenn Fehler kommt: Wiederhole die Schritte 1-5 oben.
+### "--dsp: unknown option"
 
-## Fehler 2: "claude: command not found"
+**Problem:** The --dsp flag hasn't been configured
 
-**Problem:** Claude Code ist nicht installiert.
+**Solution:** Follow setup in [DSP-FLAG-IMPLEMENTATION.md](./DSP-FLAG-IMPLEMENTATION.md)
 
-**Lösung:** Siehe INSTALL.md in diesem Repository.
+### Permission errors
 
-## Fehler 3: Alias funktioniert nur im aktuellen Terminal
+**Problem:** Claude asking for permissions repeatedly
 
-**Problem:** Du hast `source ~/.bashrc` vergessen.
-
-**Lösung:**
-```bash
-source ~/.bashrc
-```
-
-Oder: Schließe das Terminal und öffne ein neues.
+**Solution:** Use `--dangerously-skip-permissions` or configure `--dsp` flag
 
 ---
 
-# Weitere Aliase (Optional)
+## Summary
 
-Du kannst mehrere Aliase erstellen:
+- **Built-in flags:** `--dangerously-skip-permissions`, `--version`, `--help`
+- **Custom flag:** `--dsp` (requires setup, see DSP-FLAG-IMPLEMENTATION.md)
+- **Custom aliases:** Create your own shortcuts as needed
+- **Chaining:** Claude works great with Unix pipes and redirects
 
-```bash
-alias dsp='claude --dangerously-skip-permissions'
-alias c='claude --dangerously-skip-permissions'
-alias cdsp='claude --dangerously-skip-permissions'
-```
-
-Dann funktionieren alle drei:
-```bash
-dsp        # Funktioniert
-c          # Funktioniert
-cdsp       # Funktioniert
-```
-
-Alle drei starten Claude im dangerously-skip-permissions Modus.
-
----
-
-# Was du dir merken musst
-
-1. `claude --dangerously-skip-permissions` = Der ECHTE Befehl (immer verfügbar)
-2. `dsp` = Eine ABKÜRZUNG, die DU erstellen musst
-3. Der Alias ist nur in **deinem System** aktiv
-4. Andere Computer brauchen eigene Alias-Einrichtung
-5. Der Alias ist permanent (bleibt nach Neustart)
+**Remember:** Only use `--dangerously-skip-permissions` mode in safe, sandboxed environments.

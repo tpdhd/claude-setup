@@ -1,250 +1,200 @@
-# --dsp Flag Implementation Guide (PERMANENT SOLUTION)
+# --dsp Flag Implementation Guide
 
-## CRITICAL UNDERSTANDING
+## Overview
 
-This guide provides a **PERMANENT** solution for adding the `--dsp` flag to Claude Code.
-
-**The wrapper script method (recommended):**
-- Creates `--dsp` as a permanent shorthand for `--dangerously-skip-permissions`
-- Survives ALL npm updates and reinstalls
-- Never needs to be reapplied
-- Works transparently like a built-in flag
-
-**DO NOT confuse this with:**
-- Shell aliases (only work in interactive shells)
-- Binary modification (gets reset on npm updates)
-
----
-
-## What This Does
+This guide provides **permanent** solutions for adding the `--dsp` flag as a shorthand for `--dangerously-skip-permissions` in Claude Code.
 
 After implementation:
-- `claude --dsp` will work (NEW)
-- `claude --dangerously-skip-permissions` will still work (UNCHANGED)
-- Both flags do the EXACT same thing
-- **Works permanently across all npm updates**
+- `claude --dsp` will work as a shorthand
+- `claude --dangerously-skip-permissions` continues to work
+- Both flags do exactly the same thing
+- **Survives npm updates permanently**
 
 ---
 
-## RECOMMENDED: Permanent Wrapper Script Method
+## Choose Your Method
 
-This is the **BEST** solution because it:
-- ✅ Survives npm updates permanently
-- ✅ Never needs reapplication
-- ✅ Works in all shells and contexts
-- ✅ Easy to maintain and understand
-- ✅ Doesn't modify Claude binary
+### Method 1: Bash Function (Simplest) ⭐ RECOMMENDED
 
-### Prerequisites
+**Best for:** Personal use, quick setup, bash users
 
-1. Claude Code must be installed
-2. Basic command line access
-3. Bash shell (standard on Linux/macOS/WSL)
+**Pros:**
+- ✅ Fastest to implement (2 commands)
+- ✅ No separate files needed
+- ✅ Works immediately
+- ✅ Survives npm updates
 
-### Step 1: Create Wrapper Directory
+**Cons:**
+- ❌ Only works in bash
+- ❌ Only works in interactive shells
+- ❌ Won't work in shell scripts
+
+### Method 2: Wrapper Script (Most Robust)
+
+**Best for:** Production environments, multiple shells, shared systems
+
+**Pros:**
+- ✅ Works in all shells (bash, zsh, fish, etc.)
+- ✅ Works in non-interactive contexts
+- ✅ Works in shell scripts
+- ✅ More portable
+
+**Cons:**
+- ❌ Slightly more complex setup
+- ❌ Requires PATH configuration
+
+---
+
+## Method 1: Bash Function Implementation
+
+### Quick Installation
+
+Add this to your `~/.bashrc`:
 
 ```bash
-mkdir -p ~/.local/bin
-```
-
-### Step 2: Create Wrapper Script
-
-Create the file `~/.local/bin/claude` with this content:
-
-```bash
-#!/bin/bash
-
-# Permanent wrapper script for Claude that adds support for --dsp flag
-# This survives npm updates to Claude Code by intercepting calls before the real binary
-
-# The real Claude binary location (npm global installation)
-REAL_CLAUDE="$(readlink -f "$(which -a claude | grep -v "^$HOME/.local/bin" | head -1)" 2>/dev/null)"
-
-# Fallback: Try common npm global locations
-if [[ ! -f "$REAL_CLAUDE" ]]; then
-    for path in \
-        "$HOME/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js" \
-        "/usr/local/lib/node_modules/@anthropic-ai/claude-code/cli.js" \
-        "$HOME/.nvm/versions/node/*/lib/node_modules/@anthropic-ai/claude-code/cli.js"; do
-        if [[ -f "$path" ]]; then
-            REAL_CLAUDE="$path"
-            break
+# Claude wrapper function to expand --dsp to --dangerously-skip-permissions
+claude() {
+    local args=()
+    for arg in "$@"; do
+        if [ "$arg" = "--dsp" ]; then
+            args+=("--dangerously-skip-permissions")
+        else
+            args+=("$arg")
         fi
     done
-fi
-
-# Check if we found Claude
-if [[ ! -f "$REAL_CLAUDE" ]]; then
-    echo "Error: Cannot find real Claude binary" >&2
-    echo "Looked in: npm global directories" >&2
-    exit 1
-fi
-
-# Process arguments to replace --dsp with --dangerously-skip-permissions
-args=()
-for arg in "$@"; do
-    if [[ "$arg" == "--dsp" ]]; then
-        args+=("--dangerously-skip-permissions")
-    else
-        args+=("$arg")
-    fi
-done
-
-# Call the real Claude with modified arguments
-exec "$REAL_CLAUDE" "${args[@]}"
+    command claude "${args[@]}"
+}
 ```
 
-**Quick command to create the wrapper:**
+### Step-by-Step Installation
+
+**Step 1: Open your bash configuration**
 
 ```bash
-cat > ~/.local/bin/claude << 'EOF'
-#!/bin/bash
-
-# Permanent wrapper script for Claude that adds support for --dsp flag
-# This survives npm updates to Claude Code by intercepting calls before the real binary
-
-# The real Claude binary location (npm global installation)
-REAL_CLAUDE="$(readlink -f "$(which -a claude | grep -v "^$HOME/.local/bin" | head -1)" 2>/dev/null)"
-
-# Fallback: Try common npm global locations
-if [[ ! -f "$REAL_CLAUDE" ]]; then
-    for path in \
-        "$HOME/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js" \
-        "/usr/local/lib/node_modules/@anthropic-ai/claude-code/cli.js" \
-        "$HOME/.nvm/versions/node/*/lib/node_modules/@anthropic-ai/claude-code/cli.js"; do
-        if [[ -f "$path" ]]; then
-            REAL_CLAUDE="$path"
-            break
-        fi
-    done
-fi
-
-# Check if we found Claude
-if [[ ! -f "$REAL_CLAUDE" ]]; then
-    echo "Error: Cannot find real Claude binary" >&2
-    echo "Looked in: npm global directories" >&2
-    exit 1
-fi
-
-# Process arguments to replace --dsp with --dangerously-skip-permissions
-args=()
-for arg in "$@"; do
-    if [[ "$arg" == "--dsp" ]]; then
-        args+=("--dangerously-skip-permissions")
-    else
-        args+=("$arg")
-    fi
-done
-
-# Call the real Claude with modified arguments
-exec "$REAL_CLAUDE" "${args[@]}"
-EOF
+nano ~/.bashrc
 ```
 
-### Step 3: Make Script Executable
+**Step 2: Scroll to the end and add the function**
+
+Copy and paste the function above at the end of the file.
+
+**Step 3: Save and exit**
+
+- Press `Ctrl + O` to save
+- Press `Enter` to confirm
+- Press `Ctrl + X` to exit
+
+**Step 4: Reload your shell configuration**
 
 ```bash
-chmod +x ~/.local/bin/claude
-```
-
-### Step 4: Update PATH
-
-Add `~/.local/bin` to your PATH by editing your shell configuration file.
-
-For **Bash** (most common):
-
-```bash
-# Add this line to ~/.bashrc (or create it if it doesn't exist)
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-```
-
-For **Zsh**:
-
-```bash
-# Add this line to ~/.zshrc
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
-```
-
-**IMPORTANT:** Make sure this line comes AFTER any npm or nvm PATH configurations in your shell config file.
-
-### Step 5: Reload Shell Configuration
-
-```bash
-# For Bash:
 source ~/.bashrc
-
-# For Zsh:
-source ~/.zshrc
-
-# Or simply open a new terminal
 ```
 
-### Step 6: Verify Installation
-
-**Check which Claude is being used:**
+**Step 5: Test it**
 
 ```bash
-which claude
+echo "test" | claude --dsp -p "Say: DSP working!"
 ```
 
-**Expected output:**
-```
-/home/yourusername/.local/bin/claude
-```
+Expected output: `DSP working!`
 
-If you see `/home/yourusername/.npm-global/bin/claude` or similar, your PATH might not be configured correctly. Make sure `~/.local/bin` appears BEFORE npm directories in your PATH.
-
-**Test the --dsp flag:**
+### Automatic Installation
 
 ```bash
-echo "test" | claude --dsp -p "Say: DSP flag is working!"
+cat >> ~/.bashrc << 'EOF'
+
+# Claude wrapper function to expand --dsp to --dangerously-skip-permissions
+claude() {
+    local args=()
+    for arg in "$@"; do
+        if [ "$arg" = "--dsp" ]; then
+            args+=("--dangerously-skip-permissions")
+        else
+            args+=("$arg")
+        fi
+    done
+    command claude "${args[@]}"
+}
+EOF
+
+source ~/.bashrc
 ```
 
-**Expected output:**
-```
-DSP flag is working!
-```
+### How It Works
 
-**Test original flag still works:**
+1. The bash function intercepts the `claude` command
+2. It scans all arguments for `--dsp`
+3. Replaces `--dsp` with `--dangerously-skip-permissions`
+4. Calls the real `claude` command with modified arguments
+5. Uses `command` to avoid infinite recursion
+
+### Verification
 
 ```bash
-echo "test" | claude --dangerously-skip-permissions -p "Say: Original flag works!"
-```
+# Check if function exists
+type claude
+# Should output: "claude is a function"
 
-**Expected output:**
-```
-Original flag works!
+# Test the flag
+echo "test" | claude --dsp -p "what is 2+2?"
+# Should output: 4 (or similar response)
+
+# Test original flag still works
+echo "test" | claude --dangerously-skip-permissions -p "what is 3+3?"
+# Should output: 6 (or similar response)
 ```
 
 ---
 
-## Complete Installation Script
+## Method 2: Wrapper Script Implementation
 
-For quick installation, run this entire script:
+### Automated Installation
 
 ```bash
-#!/bin/bash
+# Download and run the installer
+bash <(curl -s https://raw.githubusercontent.com/tpdhd/claude-setup/master/install-dsp-flag.sh)
 
-echo "Installing permanent --dsp flag wrapper for Claude..."
+# Or if you have the repo cloned
+cd ~/claude-setup
+./install-dsp-flag.sh
+```
 
-# Step 1: Create directory
+### Manual Installation
+
+**Step 1: Create wrapper directory**
+
+```bash
 mkdir -p ~/.local/bin
+```
 
-# Step 2: Create wrapper script
+**Step 2: Create wrapper script**
+
+```bash
 cat > ~/.local/bin/claude << 'EOF'
 #!/bin/bash
 
 # Permanent wrapper script for Claude that adds support for --dsp flag
 # This survives npm updates to Claude Code by intercepting calls before the real binary
 
-# The real Claude binary location (npm global installation)
-REAL_CLAUDE="$(readlink -f "$(which -a claude | grep -v "^$HOME/.local/bin" | head -1)" 2>/dev/null)"
+# Find the real Claude binary (skip our wrapper)
+REAL_CLAUDE=""
 
-# Fallback: Try common npm global locations
-if [[ ! -f "$REAL_CLAUDE" ]]; then
+# Try which -a to find all claude binaries
+for claude_path in $(which -a claude 2>/dev/null); do
+    # Skip our own wrapper
+    if [[ "$claude_path" != "$HOME/.local/bin/claude" ]]; then
+        REAL_CLAUDE="$claude_path"
+        break
+    fi
+done
+
+# If not found, try common locations
+if [[ -z "$REAL_CLAUDE" ]] || [[ ! -f "$REAL_CLAUDE" ]]; then
     for path in \
         "$HOME/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js" \
+        "$HOME/.npm-global/bin/claude" \
         "/usr/local/lib/node_modules/@anthropic-ai/claude-code/cli.js" \
+        "/usr/local/bin/claude" \
         "$HOME/.nvm/versions/node/*/lib/node_modules/@anthropic-ai/claude-code/cli.js"; do
         if [[ -f "$path" ]]; then
             REAL_CLAUDE="$path"
@@ -254,9 +204,9 @@ if [[ ! -f "$REAL_CLAUDE" ]]; then
 fi
 
 # Check if we found Claude
-if [[ ! -f "$REAL_CLAUDE" ]]; then
+if [[ -z "$REAL_CLAUDE" ]] || [[ ! -f "$REAL_CLAUDE" ]]; then
     echo "Error: Cannot find real Claude binary" >&2
-    echo "Looked in: npm global directories" >&2
+    echo "Searched in standard npm global locations" >&2
     exit 1
 fi
 
@@ -273,105 +223,133 @@ done
 # Call the real Claude with modified arguments
 exec "$REAL_CLAUDE" "${args[@]}"
 EOF
-
-# Step 3: Make executable
-chmod +x ~/.local/bin/claude
-echo "✓ Wrapper script created at ~/.local/bin/claude"
-
-# Step 4: Update PATH in bashrc if needed
-if ! grep -q '$HOME/.local/bin' ~/.bashrc 2>/dev/null; then
-    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-    echo "✓ Added ~/.local/bin to PATH in ~/.bashrc"
-else
-    echo "✓ ~/.local/bin already in PATH"
-fi
-
-# Step 5: Test in new shell
-echo ""
-echo "Installation complete!"
-echo ""
-echo "To use in current shell, run:"
-echo "  source ~/.bashrc"
-echo ""
-echo "Or open a new terminal."
-echo ""
-echo "Test with:"
-echo '  echo "test" | claude --dsp -p "Say: DSP flag is working!"'
 ```
+
+**Step 3: Make script executable**
+
+```bash
+chmod +x ~/.local/bin/claude
+```
+
+**Step 4: Update PATH**
+
+For Bash:
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+For Zsh:
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+**IMPORTANT:** This line must come AFTER any npm or nvm PATH configurations.
+
+**Step 5: Verify installation**
+
+```bash
+# Check which Claude is found first
+which claude
+# Expected: /home/yourusername/.local/bin/claude
+
+# Test the flag
+echo "test" | claude --dsp -p "Say: DSP working!"
+```
+
+### How It Works
+
+1. **PATH Priority**: The wrapper is in `~/.local/bin`, which is checked before npm directories
+2. **Interception**: When you type `claude`, the shell finds the wrapper first
+3. **Argument Processing**: The wrapper replaces `--dsp` with `--dangerously-skip-permissions`
+4. **Delegation**: The wrapper calls the real Claude binary
+5. **Transparency**: Uses `exec` to replace the wrapper process
 
 ---
 
-## How It Works
+## Comparison Table
 
-### Technical Explanation
-
-1. **PATH Priority**: The wrapper is placed in `~/.local/bin`, which is added to PATH before npm global bin
-2. **Interception**: When you type `claude`, your shell finds the wrapper first
-3. **Argument Processing**: The wrapper scans all arguments and replaces `--dsp` with `--dangerously-skip-permissions`
-4. **Delegation**: The wrapper calls the real Claude binary with the modified arguments
-5. **Transparency**: The wrapper uses `exec` to replace itself with Claude, making it invisible in the process tree
-
-### Why This Is Permanent
-
-- The wrapper is a separate file, not a modification of Claude
-- npm updates only modify the Claude installation directory
-- Your `~/.local/bin` directory and shell configuration are never touched by npm
-- The wrapper automatically finds the real Claude binary even after updates
+| Feature | Bash Function | Wrapper Script |
+|---------|---------------|----------------|
+| Setup Time | 30 seconds | 2 minutes |
+| Commands Needed | 2 | 4-5 |
+| Works in Bash | ✅ Yes | ✅ Yes |
+| Works in Zsh | ❌ No | ✅ Yes |
+| Works in Scripts | ❌ No | ✅ Yes |
+| Works Non-Interactive | ❌ No | ✅ Yes |
+| Survives npm updates | ✅ Yes | ✅ Yes |
+| Easy to Remove | ✅ Very Easy | ✅ Easy |
 
 ---
 
 ## Troubleshooting
 
-### Problem: "which claude" still shows npm global path
+### Bash Function Issues
 
-**Cause:** PATH is not configured correctly or shell hasn't reloaded configuration.
+**Problem:** "claude: command not found" from inside function
 
-**Solution:**
-1. Open a new terminal or run `source ~/.bashrc`
-2. Verify PATH order: `echo $PATH | tr ':' '\n' | head -5`
-3. Ensure `~/.local/bin` appears BEFORE npm directories
-4. If not, check that your `~/.bashrc` has the PATH export line AFTER npm/nvm configurations
+**Solution:** Make sure Claude Code is installed and in PATH:
+```bash
+which claude
+# Should show Claude location (not the function)
+```
 
-### Problem: "Cannot find real Claude binary"
+**Problem:** Function not working after adding to .bashrc
 
-**Cause:** Claude is installed in an unusual location.
+**Solution:** Reload your shell:
+```bash
+source ~/.bashrc
+# Or open a new terminal
+```
 
-**Solution:**
-1. Find Claude's actual location: `npm list -g @anthropic-ai/claude-code`
-2. Edit the wrapper at `~/.local/bin/claude`
-3. Update the `REAL_CLAUDE` variable to point to your Claude location
+**Problem:** Changes disappear after reboot
 
-### Problem: Wrapper not working after npm update
+**Solution:** Make sure you added the function to `~/.bashrc` not just typed it in the terminal.
 
-**This should never happen**, but if it does:
+### Wrapper Script Issues
 
-1. Verify wrapper still exists: `ls -l ~/.local/bin/claude`
-2. Verify it's still executable: `chmod +x ~/.local/bin/claude`
-3. Test the real Claude location: The wrapper auto-detects it
-4. Check PATH order: `which -a claude` should show wrapper first
-
-### Problem: "--dsp" flag not working
-
-**Cause:** Wrapper is not being called or has a bug.
+**Problem:** "which claude" still shows npm global path
 
 **Solution:**
-1. Test wrapper directly: `~/.local/bin/claude --help`
-2. Check which Claude is being used: `which claude`
-3. If seeing npm version, check PATH configuration
-4. Verify wrapper has correct permissions: `ls -l ~/.local/bin/claude`
+1. Check PATH order: `echo $PATH | tr ':' '\n' | head -5`
+2. Ensure `~/.local/bin` appears BEFORE npm directories
+3. Reload shell: `source ~/.bashrc`
+
+**Problem:** "Cannot find real Claude binary"
+
+**Solution:**
+1. Find Claude: `npm list -g @anthropic-ai/claude-code`
+2. Edit wrapper at `~/.local/bin/claude`
+3. Update `REAL_CLAUDE` variable with correct path
 
 ---
 
 ## Uninstallation
 
-To remove the --dsp flag wrapper:
+### Remove Bash Function
+
+1. Open `~/.bashrc`:
+   ```bash
+   nano ~/.bashrc
+   ```
+
+2. Delete the `claude()` function block
+
+3. Save and reload:
+   ```bash
+   source ~/.bashrc
+   ```
+
+### Remove Wrapper Script
 
 ```bash
-# Remove wrapper script
+# Remove wrapper
 rm ~/.local/bin/claude
 
-# Optionally remove the PATH line from ~/.bashrc
-sed -i '/\.local\/bin/d' ~/.bashrc
+# Optionally remove PATH line from shell config
+nano ~/.bashrc
+# Find and delete the line: export PATH="$HOME/.local/bin:$PATH"
 
 # Reload shell
 source ~/.bashrc
@@ -380,7 +358,7 @@ source ~/.bashrc
 Verify:
 ```bash
 which claude
-# Should show: /home/yourusername/.npm-global/bin/claude (or similar npm path)
+# Should show npm global path again
 
 claude --dsp
 # Should show error: "unknown option '--dsp'"
@@ -388,247 +366,36 @@ claude --dsp
 
 ---
 
-## Important Notes
+## For AI Assistants
 
-1. **Permanent Solution**: Unlike binary modification, this NEVER needs reapplication
-2. **Update-Safe**: Survives all npm updates, reinstalls, and version changes
-3. **Transparent**: Works exactly like a built-in flag
-4. **Maintainable**: Easy to modify or remove
-5. **No Side Effects**: Doesn't modify Claude installation
-6. **Universal**: Works on Linux, macOS, WSL, and any Unix-like system
-7. **Shell-Independent**: Works in all contexts, not just interactive shells
+When implementing the `--dsp` flag for users:
 
----
+1. **Ask about their setup:**
+   - Are they using bash or zsh?
+   - Do they need it to work in scripts?
 
-## For AI Implementation
+2. **Recommend based on needs:**
+   - Personal use, bash only → Bash Function Method
+   - Production, multiple shells → Wrapper Script Method
 
-When implementing this for users:
-1. Always create the wrapper in `~/.local/bin` (standard location)
-2. Ensure PATH configuration comes AFTER npm/nvm in shell config
-3. Use the complete installation script for one-step setup
-4. Always verify with `which claude` after installation
-5. Test both `--dsp` and `--dangerously-skip-permissions` flags
-6. Remind users this survives all npm updates permanently
+3. **Implement carefully:**
+   - Always use heredocs with single quotes to prevent variable expansion
+   - Test in a new shell after implementation
+   - Verify both `--dsp` and `--dangerously-skip-permissions` work
 
-**Critical:** This is a wrapper approach, not binary modification. It never needs reapplication.
+4. **Never suggest:**
+   - ❌ Modifying the Claude binary directly (gets reset on updates)
+   - ❌ Shell aliases for `--dsp` (doesn't expand the flag)
 
 ---
 
-# LEGACY METHOD (Not Recommended)
+## Summary
 
-## Binary Modification Method - NON-PERMANENT
+- **Bash Function:** Quick, simple, perfect for personal bash use
+- **Wrapper Script:** Robust, portable, works everywhere
+- Both methods are permanent and survive npm updates
+- Choose based on your needs and environment
 
-**⚠️ WARNING: This method gets reset on every npm update**
+The `--dsp` flag makes Claude Code easier to use while maintaining the same security considerations as `--dangerously-skip-permissions`.
 
-The section below describes the old method of modifying the Claude binary directly using `sed`. This approach:
-- ❌ Gets overwritten on npm updates
-- ❌ Requires reapplication after every Claude update
-- ❌ Can break if Claude's internal structure changes
-- ❌ Modifies the actual Claude installation
-
-**Use the wrapper script method above instead.**
-
-<details>
-<summary>Click to expand legacy binary modification method (not recommended)</summary>
-
-### Legacy Step 1: Find Claude Binary Location
-
-**Command:**
-```bash
-which claude
-```
-
-**Expected Output Examples:**
-- Linux/WSL: `/home/username/.npm-global/bin/claude`
-- macOS: `/usr/local/bin/claude` or `/Users/username/.npm-global/bin/claude`
-- Termux: `/data/data/com.termux/files/usr/bin/claude`
-
-**Important: Check if it's a symlink:**
-```bash
-ls -l $(which claude)
-```
-
-If it shows a symlink (arrow `->` pointing to another file), get the actual file path:
-```bash
-readlink -f $(which claude)
-```
-
-Example: If `which claude` returns `/home/user/.npm-global/bin/claude` but it's a symlink to `../lib/node_modules/@anthropic-ai/claude-code/cli.js`, then the actual path you need is `/home/user/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js`
-
-**Save the actual file path - you need it for all following steps.**
-
-For this guide, we'll use the placeholder: `<CLAUDE_PATH>`
-
-### Legacy Step 2: Create Backup
-
-**CRITICAL: Always backup first!**
-
-**Command:**
-```bash
-cp <CLAUDE_PATH> <CLAUDE_PATH>.backup
-```
-
-**Example:**
-```bash
-cp /home/username/.npm-global/bin/claude /home/username/.npm-global/bin/claude.backup
-```
-
-**Verify backup exists:**
-```bash
-ls -lh <CLAUDE_PATH>.backup
-```
-
-You should see the file listed with size around 10-11 MB.
-
-### Legacy Step 3: Modify Claude Binary
-
-**You need to make THREE changes to the Claude binary file.**
-
-#### Change 1: Add --dsp Option Definition
-
-**What to find:**
-```javascript
-.option("--dangerously-skip-permissions","Bypass all permission checks. Recommended only for sandboxes with no internet access.",()=>!0)
-```
-
-**What to replace it with:**
-```javascript
-.option("--dangerously-skip-permissions","Bypass all permission checks. Recommended only for sandboxes with no internet access.",()=>!0).option("--dsp","Shorthand for --dangerously-skip-permissions.",()=>!0)
-```
-
-**Command to execute:**
-```bash
-sed -i 's/.option("--dangerously-skip-permissions","Bypass all permission checks. Recommended only for sandboxes with no internet access.",()=>!0)/.option("--dangerously-skip-permissions","Bypass all permission checks. Recommended only for sandboxes with no internet access.",()=>!0).option("--dsp","Shorthand for --dangerously-skip-permissions.",()=>!0)/g' <CLAUDE_PATH>
-```
-
-#### Change 2: Add dsp to Parameter Destructuring
-
-**What to find:**
-```javascript
-let{debug:D=!1,debugToStderr:W=!1,dangerouslySkipPermissions:K,allowDangerouslySkipPermissions:V=!1
-```
-
-**What to replace it with:**
-```javascript
-let{debug:D=!1,debugToStderr:W=!1,dangerouslySkipPermissions:K,dsp:dspFlag,allowDangerouslySkipPermissions:V=!1
-```
-
-**Command to execute:**
-```bash
-sed -i 's/let{debug:D=!1,debugToStderr:W=!1,dangerouslySkipPermissions:K,allowDangerouslySkipPermissions:V=!1/let{debug:D=!1,debugToStderr:W=!1,dangerouslySkipPermissions:K,dsp:dspFlag,allowDangerouslySkipPermissions:V=!1/g' <CLAUDE_PATH>
-```
-
-#### Change 3: Combine Both Flags
-
-**What to find:**
-```javascript
-}=I,x=I.agents,m=I.agent;
-```
-
-**What to replace it with:**
-```javascript
-}=I;K=K||dspFlag;let x=I.agents,m=I.agent;
-```
-
-**Command to execute:**
-```bash
-sed -i 's/}=I,x=I.agents,m=I.agent;/}=I;K=K||dspFlag;let x=I.agents,m=I.agent;/g' <CLAUDE_PATH>
-```
-
-### Legacy Step 4: Verify Changes
-
-#### Verification 1: Check Help Output
-
-**Command:**
-```bash
-claude --help | grep -A 1 "dsp"
-```
-
-**Expected Output:**
-```
-  --dsp                                             Shorthand for --dangerously-skip-permissions.
-```
-
-If you see this, the flag was added successfully.
-
-#### Verification 2: Test --dsp Flag
-
-**Command:**
-```bash
-echo "test" | claude --dsp -p "what is 2+2?"
-```
-
-**Expected Output:**
-```
-2 + 2 = 4
-```
-
-If this works, the flag is functioning correctly.
-
-#### Verification 3: Test Original Flag Still Works
-
-**Command:**
-```bash
-echo "test" | claude --dangerously-skip-permissions -p "what is 3+3?"
-```
-
-**Expected Output:**
-```
-3 + 3 = 6
-```
-
-Both flags should work identically.
-
-### Complete Legacy Implementation Script
-
-**For quick implementation, run all commands together:**
-
-```bash
-# Step 1: Find Claude location (follow symlinks)
-CLAUDE_PATH=$(readlink -f $(which claude) 2>/dev/null || which claude)
-echo "Claude found at: $CLAUDE_PATH"
-
-# Step 2: Create backup
-cp "$CLAUDE_PATH" "$CLAUDE_PATH.backup"
-echo "Backup created at: $CLAUDE_PATH.backup"
-
-# Step 3: Apply all three changes
-sed -i 's/.option("--dangerously-skip-permissions","Bypass all permission checks. Recommended only for sandboxes with no internet access.",()=>!0)/.option("--dangerously-skip-permissions","Bypass all permission checks. Recommended only for sandboxes with no internet access.",()=>!0).option("--dsp","Shorthand for --dangerously-skip-permissions.",()=>!0)/g' "$CLAUDE_PATH"
-
-sed -i 's/let{debug:D=!1,debugToStderr:W=!1,dangerouslySkipPermissions:K,allowDangerouslySkipPermissions:V=!1/let{debug:D=!1,debugToStderr:W=!1,dangerouslySkipPermissions:K,dsp:dspFlag,allowDangerouslySkipPermissions:V=!1/g' "$CLAUDE_PATH"
-
-sed -i 's/}=I,x=I.agents,m=I.agent;/}=I;K=K||dspFlag;let x=I.agents,m=I.agent;/g' "$CLAUDE_PATH"
-
-# Step 4: Verify
-echo "Verifying changes..."
-claude --help | grep -E "(--dsp|--dangerously-skip-permissions)" | grep -v "allow-dangerously"
-echo ""
-echo "Testing --dsp flag:"
-echo "test" | claude --dsp -p "what is 1+1?"
-
-echo ""
-echo "⚠️  WARNING: These changes will be lost on next npm update!"
-echo "⚠️  Use the wrapper script method instead for permanent solution."
-```
-
-### Restore Original Claude (Legacy)
-
-If something goes wrong, restore from backup:
-
-```bash
-CLAUDE_PATH=$(which claude)
-cp "$CLAUDE_PATH.backup" "$CLAUDE_PATH"
-```
-
-Verify:
-```bash
-claude --help | grep -A 1 "dsp"
-```
-
-Should show nothing (flag removed).
-
-</details>
-
----
-
-**Use the wrapper script method above for a permanent, update-safe solution!**
+**Remember:** Only use dangerously-skip-permissions mode in safe, sandboxed environments where Claude can't cause harm.
