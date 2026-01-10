@@ -18,6 +18,442 @@ Sound Notifications geben dir ein **akustisches Signal**, wenn Claude Code ferti
 
 ---
 
+# Installation für WSL2 (Windows Subsystem for Linux)
+
+## ⚠️ KRITISCH: WSL braucht eine ANDERE Lösung!
+
+WSL hat **keine native Audio-Unterstützung**. Die Linux-basierten Lösungen (sox, mpg123) funktionieren NICHT in WSL!
+
+**Die Lösung:** Wir nutzen **PowerShell** um Sounds über Windows abzuspielen.
+
+## Was funktioniert in WSL:
+
+✅ **Windows System Sounds** via PowerShell
+✅ **Custom WAV Dateien** via PowerShell
+✅ **Stop Hook** in `~/.claude.json` oder `~/.claude/settings.json`
+
+❌ **NICHT:** Linux Audio Tools (sox, mpg123, aplay)
+❌ **NICHT:** Terminal Bell (`\x07`) - kein Sound in WSL
+
+---
+
+## Quick Setup für WSL (Funktioniert zu 100%)
+
+### Schritt 1: Erstelle das Sound-Notification Script
+
+```bash
+cat > ~/.claude/notify-sound.js << 'EOF'
+#!/usr/bin/env node
+const path = require('path');
+const fs = require('fs');
+const { exec, execSync } = require('child_process');
+
+// Load config to determine which sound to play
+const configPath = path.join(process.env.HOME, '.claude.json');
+
+let config = {};
+let soundChoice = 'terminal-bell'; // Default fallback
+
+try {
+  const configContent = fs.readFileSync(configPath, 'utf8');
+  config = JSON.parse(configContent);
+  soundChoice = config.soundNotification || 'terminal-bell';
+} catch (error) {
+  // If config doesn't exist or can't be read, use default
+  console.error('Could not read config, using terminal-bell as fallback');
+}
+
+// Check if sound is enabled
+if (config.soundEnabled === false) {
+  // Sound is disabled, exit silently
+  process.exit(0);
+}
+
+// Detect if running in WSL
+function isWSL() {
+  if (process.platform !== 'linux') {
+    return false;
+  }
+
+  try {
+    // Check for WSL-specific indicators
+    const procVersion = fs.readFileSync('/proc/version', 'utf8').toLowerCase();
+    return procVersion.includes('microsoft') || procVersion.includes('wsl');
+  } catch (error) {
+    return false;
+  }
+}
+
+const runningInWSL = isWSL();
+
+// Sound file paths
+const soundsDir = path.join(process.env.HOME, '.claude', 'sounds');
+const soundFiles = {
+  'custom-notification': path.join(soundsDir, 'custom-notification.wav'),
+  'gentle-chime': path.join(soundsDir, 'gentle-chime.mp3'),
+  'success-ping': path.join(soundsDir, 'success-ping.mp3'),
+  'soft-marimba': path.join(soundsDir, 'soft-marimba.mp3'),
+  'digital-blip': path.join(soundsDir, 'digital-blip.mp3'),
+  'terminal-bell': 'beep'
+};
+
+// Map sound choices to Windows system sounds for WSL
+const windowsSystemSounds = {
+  'custom-notification': 'Asterisk',   // Fallback if WAV file missing
+  'gentle-chime': 'Asterisk',          // Soft, pleasant sound
+  'success-ping': 'Exclamation',       // Positive notification
+  'soft-marimba': 'Asterisk',          // Similar to gentle chime
+  'digital-blip': 'Hand',              // Short, crisp sound
+  'terminal-bell': 'Beep'              // Default system beep
+};
+
+// Convert WSL path to Windows path
+function convertToWindowsPath(wslPath) {
+  try {
+    // Use wslpath command to convert
+    const windowsPath = execSync(`wslpath -w "${wslPath}"`, { encoding: 'utf8' }).trim();
+    return windowsPath;
+  } catch (error) {
+    console.error('Error converting path:', error.message);
+    return null;
+  }
+}
+
+// Platform-specific audio players
+function getAudioCommand(soundFile) {
+  const platform = process.platform;
+
+  if (runningInWSL) {
+    // WSL - Use PowerShell to play sounds through Windows
+    if (soundChoice === 'terminal-bell') {
+      // Use Windows system beep
+      return `powershell.exe -Command "[System.Media.SystemSounds]::Beep.Play()"`;
+    } else if (fs.existsSync(soundFile)) {
+      // Convert WSL path to Windows path
+      const windowsPath = convertToWindowsPath(soundFile);
+      if (windowsPath) {
+        // For WAV files, use a simpler approach with proper escaping
+        if (soundFile.endsWith('.wav')) {
+          // Use PowerShell with proper quoting
+          const escapedPath = windowsPath.replace(/\\/g, '\\\\').replace(/'/g, "''");
+          return `powershell.exe -Command "& {(New-Object Media.SoundPlayer '${escapedPath}').PlaySync()}"`;
+        } else {
+          // For MP3 and other formats, try Windows Media Player
+          const escapedPath = windowsPath.replace(/\\/g, '\\\\').replace(/'/g, "''");
+          return `powershell.exe -Command "& {Add-Type -AssemblyName presentationCore; \\$player = New-Object System.Windows.Media.MediaPlayer; \\$player.Open('${escapedPath}'); \\$player.Play(); Start-Sleep -Seconds 2}"`;
+        }
+      }
+    }
+
+    // Fallback to Windows system sound
+    const systemSound = windowsSystemSounds[soundChoice] || 'Beep';
+    return `powershell.exe -Command "[System.Media.SystemSounds]::${systemSound}.Play()"`;
+
+  } else if (platform === 'darwin') {
+    // macOS
+    return `afplay "${soundFile}"`;
+  } else if (platform === 'linux') {
+    // Native Linux - try multiple players
+    return `(which mpg123 >/dev/null 2>&1 && mpg123 -q "${soundFile}") || (which play >/dev/null 2>&1 && play -q "${soundFile}") || (which ffplay >/dev/null 2>&1 && ffplay -nodisp -autoexit -hide_banner "${soundFile}" 2>/dev/null)`;
+  } else if (platform === 'win32') {
+    // Native Windows
+    return `powershell.exe -Command "(New-Object Media.SoundPlayer '${soundFile}').PlaySync()"`;
+  }
+
+  // Unknown platform
+  return null;
+}
+
+// Play the sound
+function playSound() {
+  const soundFile = soundFiles[soundChoice];
+
+  if (!soundFile) {
+    console.error(`Unknown sound choice: ${soundChoice}`);
+    // Fallback to beep
+    if (runningInWSL) {
+      exec(`powershell.exe -Command "[System.Media.SystemSounds]::Beep.Play()"`, () => process.exit(0));
+    } else {
+      process.stdout.write('\x07');
+      process.exit(0);
+    }
+    return;
+  }
+
+  // Get the audio command
+  const command = getAudioCommand(soundFile);
+
+  if (command) {
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        // Fallback to beep
+        console.error(`Error playing sound: ${error.message}`);
+        console.error('Falling back to system beep');
+        if (runningInWSL) {
+          exec(`powershell.exe -Command "[System.Media.SystemSounds]::Beep.Play()"`, () => process.exit(0));
+        } else {
+          process.stdout.write('\x07');
+          process.exit(0);
+        }
+      } else {
+        process.exit(0);
+      }
+    });
+  } else {
+    // Unsupported platform, use beep
+    console.error('Unsupported platform, using system beep');
+    if (runningInWSL) {
+      exec(`powershell.exe -Command "[System.Media.SystemSounds]::Beep.Play()"`, () => process.exit(0));
+    } else {
+      process.stdout.write('\x07');
+      process.exit(0);
+    }
+  }
+}
+
+// Execute
+playSound();
+EOF
+
+chmod +x ~/.claude/notify-sound.js
+```
+
+### Schritt 2: Erstelle das Sounds-Verzeichnis
+
+```bash
+mkdir -p ~/.claude/sounds
+```
+
+### Schritt 3: Füge eine Custom Sound Datei hinzu (Optional)
+
+Wenn du einen eigenen Sound nutzen möchtest (z.B. eine WAV Datei):
+
+```bash
+# Kopiere deine WAV-Datei nach ~/.claude/sounds/custom-notification.wav
+# Beispiel:
+cp "/mnt/c/Users/DEINNAME/Downloads/notification.wav" ~/.claude/sounds/custom-notification.wav
+```
+
+**Unterstützte Formate:**
+- ✅ WAV (am zuverlässigsten in WSL)
+- ✅ MP3 (funktioniert, aber langsamer)
+
+### Schritt 4: Konfiguriere den Hook
+
+**WICHTIG:** Claude Code sucht an **zwei** Stellen nach Hooks:
+
+1. `~/.claude.json` (User-Konfiguration)
+2. `~/.claude/settings.json` (Neuere Versionen bevorzugen dies)
+
+**Lösung:** Beide Dateien anlegen!
+
+#### Option A: Bearbeite ~/.claude.json
+
+```bash
+# Öffne die Datei
+nano ~/.claude.json
+```
+
+Füge diesen Block hinzu (achte auf korrekte JSON-Syntax!):
+
+```json
+{
+  "soundNotification": "custom-notification",
+  "soundEnabled": true,
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /home/DEINUSERNAME/.claude/notify-sound.js"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+**WICHTIG:** Ersetze `DEINUSERNAME` mit deinem tatsächlichen Linux-Username!
+
+```bash
+# Finde deinen Username:
+echo $HOME
+# Ausgabe z.B.: /home/hanspeter
+# Dann nutze: /home/hanspeter/.claude/notify-sound.js
+```
+
+#### Option B: Erstelle ~/.claude/settings.json
+
+```bash
+cat > ~/.claude/settings.json << 'EOF'
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ~/.claude/notify-sound.js"
+          }
+        ]
+      }
+    ]
+  }
+}
+EOF
+```
+
+**Hinweis:** Die Tilde `~` funktioniert in settings.json, aber nicht immer in .claude.json!
+
+### Schritt 5: Sound-Optionen
+
+Wähle einen der folgenden Sounds in deiner `~/.claude.json`:
+
+```json
+"soundNotification": "custom-notification"    // Deine eigene WAV-Datei
+"soundNotification": "gentle-chime"           // Windows Asterisk Sound
+"soundNotification": "success-ping"           // Windows Exclamation Sound
+"soundNotification": "digital-blip"           // Windows Hand Sound
+"soundNotification": "terminal-bell"          // Windows Beep (Standard)
+```
+
+### Schritt 6: Teste die Installation
+
+**Test 1: Script direkt ausführen**
+
+```bash
+node ~/.claude/notify-sound.js
+```
+
+**Erwartung:** Du solltest einen Sound hören!
+
+**Test 2: Starte Claude Code neu**
+
+```bash
+# 1. Beende alle Claude Sessions
+# 2. Starte neu:
+claude
+# 3. Stelle eine Frage: "What is 2+2?"
+# 4. Wenn Claude fertig ist, sollte der Sound spielen!
+```
+
+---
+
+## Troubleshooting WSL
+
+### Problem: Kein Sound wird abgespielt
+
+**Diagnose:**
+
+```bash
+# Test ob PowerShell funktioniert:
+powershell.exe -Command "[System.Media.SystemSounds]::Asterisk.Play()"
+```
+
+**Wenn Sound spielt:** PowerShell funktioniert, Problem liegt am Hook
+**Wenn kein Sound:** Windows Audio-Problem
+
+### Problem: Hook wird nicht getriggert
+
+**Debug-Lösung:** Erstelle ein Debug-Script:
+
+```bash
+cat > ~/.claude/debug-hook.sh << 'EOF'
+#!/bin/bash
+echo "Hook triggered at $(date)" >> /tmp/claude-hook-debug.log
+echo "Command: $0 $@" >> /tmp/claude-hook-debug.log
+echo "Working directory: $(pwd)" >> /tmp/claude-hook-debug.log
+echo "---" >> /tmp/claude-hook-debug.log
+
+# Actually play the sound
+node ~/.claude/notify-sound.js >> /tmp/claude-hook-debug.log 2>&1
+EOF
+chmod +x ~/.claude/debug-hook.sh
+```
+
+**Ändere deinen Hook zu:**
+
+```json
+"command": "/home/DEINUSERNAME/.claude/debug-hook.sh"
+```
+
+**Nach Claude-Nutzung, prüfe das Log:**
+
+```bash
+cat /tmp/claude-hook-debug.log
+```
+
+**Wenn Log leer ist:** Hook wird nicht ausgeführt → Überprüfe Hook-Konfiguration
+**Wenn Log Einträge hat:** Hook funktioniert → Problem ist beim Sound-Playback
+
+### Problem: "Error converting path" im Log
+
+**Ursache:** `wslpath` kann den Pfad nicht konvertieren
+
+**Lösung:** Nutze Windows System Sounds statt eigener WAV-Datei:
+
+```json
+"soundNotification": "gentle-chime"
+```
+
+### Problem: Sound spielt mehrfach
+
+**Ursache:** Stop Hook wird mehrfach getriggert (bekannter Bug in älteren Versionen)
+
+**Lösung 1:** Update Claude Code:
+
+```bash
+npm update -g @anthropic-ai/claude-code
+```
+
+**Lösung 2:** Temporärer Workaround - Verhindere mehrfaches Abspielen:
+
+```bash
+# Modifiziere notify-sound.js und füge ganz oben hinzu:
+const lockFile = '/tmp/claude-sound.lock';
+if (fs.existsSync(lockFile)) {
+  const lockTime = fs.statSync(lockFile).mtimeMs;
+  if (Date.now() - lockTime < 500) {
+    process.exit(0); // Ignore if sound played < 500ms ago
+  }
+}
+fs.writeFileSync(lockFile, '');
+```
+
+---
+
+## Warum funktioniert das jetzt?
+
+### Die häufigsten Fehler:
+
+❌ **Fehler 1:** `Notification` Hook statt `Stop` Hook
+- `Notification` triggert nur bei spezifischen Events (idle_prompt, permission_prompt)
+- Lösung: `Stop` Hook nutzen
+
+❌ **Fehler 2:** Falsche Pfade in .claude.json
+- Tilde `~` wird in .claude.json manchmal nicht expandiert
+- Lösung: Absolute Pfade nutzen (`/home/username/...`)
+
+❌ **Fehler 3:** Linux Audio-Tools in WSL
+- sox, mpg123, aplay funktionieren NICHT in WSL
+- Lösung: PowerShell nutzen für Windows-Audio
+
+❌ **Fehler 4:** Nur eine Config-Datei angelegt
+- Manche Claude-Versionen lesen nur `.claude.json`
+- Andere nur `settings.json`
+- Lösung: Beide anlegen!
+
+### Warum die PowerShell-Lösung funktioniert:
+
+✅ WSL kann Windows-Programme aufrufen (`powershell.exe`)
+✅ PowerShell kann Windows System Sounds abspielen
+✅ PowerShell kann WAV-Dateien über `System.Media.SoundPlayer` abspielen
+✅ Wir konvertieren WSL-Pfade zu Windows-Pfaden mit `wslpath`
+
+---
+
 # Wie funktioniert es?
 
 ## Das Hook-System
