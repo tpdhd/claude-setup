@@ -503,7 +503,7 @@ echo "2. Manually update installed_plugins.json"
 echo "3. Manually update settings.json"
 echo "4. Restart Claude Code"
 echo ""
-echo "See GSD-INSTALLATION-GUIDE.md for details."
+echo "See GSD-PLUGIN-INSTALLATION-GUIDE.md for details."
 ```
 
 ---

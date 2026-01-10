@@ -117,7 +117,7 @@ ca1    # Switch to account 1
 ca2    # Switch to account 2
 ```
 
-See [GIT_SETUP.md](./GIT_SETUP.md) for account switching configuration.
+See [GIT-CONFIGURATION-GUIDE.md](./GIT-CONFIGURATION-GUIDE.md) for account switching configuration.
 
 ---
 

@@ -541,8 +541,8 @@ git diff | claude --dsp -p "write a concise commit message"
 
 - **Repository:** https://github.com/tpdhd/claude-setup
 - **Installation Script:** See automated installation section above
-- **Sound Notifications:** See `SOUND-SETUP.md`
-- **General Setup:** See `INSTALL.md`, `GIT_SETUP.md`
+- **Sound Notifications:** See [SOUND-NOTIFICATION-HOOKS-GUIDE.md](./SOUND-NOTIFICATION-HOOKS-GUIDE.md)
+- **General Setup:** See [CLAUDE-CODE-INSTALLATION-GUIDE.md](./CLAUDE-CODE-INSTALLATION-GUIDE.md), [GIT-CONFIGURATION-GUIDE.md](./GIT-CONFIGURATION-GUIDE.md)
 
 ---
 
