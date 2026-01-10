@@ -14,17 +14,120 @@ After implementation:
 
 ---
 
-## Quick Installation (Recommended Method)
+## Quick Installation (One-Command Method)
 
-### Automated Installer
+### Automated Installation
+
+Run this single command to install the --dsp flag:
 
 ```bash
-# From this repository
-cd ~/claude-setup
-./install-dsp-flag.sh
+bash << 'INSTALLER_EOF'
+#!/bin/bash
+set -e
 
-# Or from anywhere
-bash <(curl -s https://raw.githubusercontent.com/tpdhd/claude-setup/master/install-dsp-flag.sh)
+echo "========================================="
+echo "Claude Code --dsp Flag Installer"
+echo "========================================="
+echo ""
+
+# Check if Claude is installed
+if ! command -v claude &> /dev/null; then
+    echo "❌ Error: Claude Code is not installed or not in PATH"
+    echo "   Please install Claude Code first: npm install -g @anthropic-ai/claude-code"
+    exit 1
+fi
+
+echo "✓ Claude Code found at: $(which claude)"
+echo ""
+
+# Create directory
+echo "[1/4] Creating ~/.local/bin directory..."
+mkdir -p ~/.local/bin
+echo "✓ Directory created"
+echo ""
+
+# Create wrapper script
+echo "[2/4] Creating wrapper script..."
+cat > ~/.local/bin/claude << 'EOF'
+#!/bin/bash
+# Find the real Claude binary
+REAL_CLAUDE=""
+for claude_path in $(which -a claude 2>/dev/null); do
+    if [[ "$claude_path" != "$HOME/.local/bin/claude" ]]; then
+        REAL_CLAUDE="$claude_path"
+        break
+    fi
+done
+
+# Fallback to common locations
+if [[ -z "$REAL_CLAUDE" ]] || [[ ! -f "$REAL_CLAUDE" ]]; then
+    for path in \
+        "$HOME/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js" \
+        "$HOME/.npm-global/bin/claude" \
+        "/usr/local/lib/node_modules/@anthropic-ai/claude-code/cli.js" \
+        "/usr/local/bin/claude"; do
+        if [[ -f "$path" ]]; then
+            REAL_CLAUDE="$path"
+            break
+        fi
+    done
+fi
+
+if [[ -z "$REAL_CLAUDE" ]] || [[ ! -f "$REAL_CLAUDE" ]]; then
+    echo "Error: Cannot find real Claude binary" >&2
+    exit 1
+fi
+
+# Replace --dsp with --dangerously-skip-permissions
+args=()
+for arg in "$@"; do
+    if [[ "$arg" == "--dsp" ]]; then
+        args+=("--dangerously-skip-permissions")
+    else
+        args+=("$arg")
+    fi
+done
+
+exec "$REAL_CLAUDE" "${args[@]}"
+EOF
+
+chmod +x ~/.local/bin/claude
+echo "✓ Wrapper script created"
+echo ""
+
+# Update PATH
+echo "[3/4] Updating PATH configuration..."
+SHELL_CONFIG=""
+if [[ -f ~/.bashrc ]]; then
+    SHELL_CONFIG="$HOME/.bashrc"
+elif [[ -f ~/.zshrc ]]; then
+    SHELL_CONFIG="$HOME/.zshrc"
+fi
+
+if [[ -n "$SHELL_CONFIG" ]]; then
+    if ! grep -q '$HOME/.local/bin' "$SHELL_CONFIG" 2>/dev/null && ! grep -q '~/.local/bin' "$SHELL_CONFIG" 2>/dev/null; then
+        echo "" >> "$SHELL_CONFIG"
+        echo "# Add ~/.local/bin to PATH (for Claude --dsp wrapper)" >> "$SHELL_CONFIG"
+        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$SHELL_CONFIG"
+        echo "✓ Added ~/.local/bin to PATH in $SHELL_CONFIG"
+    else
+        echo "✓ ~/.local/bin already in PATH"
+    fi
+fi
+echo ""
+
+# Test installation
+echo "[4/4] Installation complete!"
+echo ""
+echo "========================================="
+echo "IMPORTANT: Open a NEW terminal or run:"
+echo "  source ~/.bashrc"
+echo ""
+echo "Then test with:"
+echo '  which claude    # Should show: ~/.local/bin/claude'
+echo '  echo "test" | claude --dsp -p "Say: Working!"'
+echo "========================================="
+INSTALLER_EOF
 ```
 
 Then **open a NEW terminal** and test:
@@ -33,11 +136,28 @@ which claude  # Should show: ~/.local/bin/claude
 echo "test" | claude --dsp -p "Say: Working!"
 ```
 
-### Verification
+### Manual Verification
+
+After installation, verify with these checks:
 
 ```bash
-cd ~/claude-setup
-./verify-dsp.sh
+# Check wrapper exists
+[[ -f ~/.local/bin/claude ]] && echo "✓ Wrapper exists" || echo "✗ Wrapper missing"
+
+# Check wrapper is executable
+[[ -x ~/.local/bin/claude ]] && echo "✓ Wrapper executable" || echo "✗ Not executable"
+
+# Check which Claude is found
+FOUND_CLAUDE=$(which claude)
+if [[ "$FOUND_CLAUDE" == "$HOME/.local/bin/claude" ]]; then
+    echo "✓ Wrapper found first in PATH"
+else
+    echo "⚠ Wrapper not found first. Found: $FOUND_CLAUDE"
+    echo "  Run: source ~/.bashrc"
+fi
+
+# Test --dsp flag
+echo "test" | timeout 5 claude --dsp -p "Say: OK" 2>&1 | grep -q "OK" && echo "✓ --dsp working!" || echo "✗ --dsp not working"
 ```
 
 ---
@@ -409,7 +529,7 @@ git diff | claude --dsp -p "write a concise commit message"
 
 ### Installation Summary
 
-**Fastest:** Run `./install-dsp-flag.sh` from this repository
+**Fastest:** Run the one-command installer (see Quick Installation section above)
 
 **Most Reliable:** Wrapper script method (what the installer uses)
 
@@ -420,10 +540,9 @@ git diff | claude --dsp -p "write a concise commit message"
 ## Additional Resources
 
 - **Repository:** https://github.com/tpdhd/claude-setup
-- **Automated Installer:** `./install-dsp-flag.sh`
-- **Verification Script:** `./verify-dsp.sh`
+- **Installation Script:** See automated installation section above
 - **Sound Notifications:** See `SOUND-SETUP.md`
-- **General Setup:** See `INSTALL.md`, `GIT_SETUP.md`, `COMMANDS.md`
+- **General Setup:** See `INSTALL.md`, `GIT_SETUP.md`
 
 ---
 

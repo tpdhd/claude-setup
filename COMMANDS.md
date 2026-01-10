@@ -6,49 +6,21 @@
 
 ```bash
 claude                                       # Start interactive mode
-claude --dsp                                # Start with dangerously-skip-permissions (if configured)
+claude --dsp                                # Start with --dsp flag (requires setup - see DSP-FLAG-GUIDE.md)
 claude --dangerously-skip-permissions       # Start without permission prompts
 claude --version                            # Show version
 claude --help                               # Show help
 ```
 
+**Note:** The `--dsp` flag is a custom shorthand for `--dangerously-skip-permissions`. See [DSP-FLAG-GUIDE.md](./DSP-FLAG-GUIDE.md) for complete setup instructions.
+
 ### Non-Interactive Mode
 
 ```bash
 echo "input" | claude -p "your prompt"                           # Basic usage
-echo "input" | claude --dsp -p "your prompt"                     # With --dsp flag
+echo "input" | claude --dsp -p "your prompt"                     # With --dsp flag (if configured)
 cat file.txt | claude -p "summarize this"                        # Process file content
 claude -p "create a hello world script" > script.sh              # Save output to file
-```
-
----
-
-## --dsp Flag Setup
-
-The `--dsp` flag is a shorthand for `--dangerously-skip-permissions`. It's not built-in and must be configured.
-
-**See:** [DSP-FLAG-GUIDE.md](./DSP-FLAG-GUIDE.md) for complete setup instructions.
-
-### Quick Setup (Bash Function Method)
-
-```bash
-cat >> ~/.bashrc << 'EOF'
-
-# Claude wrapper function to expand --dsp to --dangerously-skip-permissions
-claude() {
-    local args=()
-    for arg in "$@"; do
-        if [ "$arg" = "--dsp" ]; then
-            args+=("--dangerously-skip-permissions")
-        else
-            args+=("$arg")
-        fi
-    done
-    command claude "${args[@]}"
-}
-EOF
-
-source ~/.bashrc
 ```
 
 ---
