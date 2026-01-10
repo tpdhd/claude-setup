@@ -14,6 +14,8 @@ Sound Notifications geben dir ein **akustisches Signal**, wenn Claude Code ferti
 - ✅ Du MUSST sie selbst einrichten (siehe unten)
 - Funktioniert mit Claude Code Hooks
 
+**NOTE:** Sound hook scripts are now organized in the `sound-hooks/` directory in this repository. You can copy them from there or create them following the instructions below.
+
 ---
 
 # Wie funktioniert es?

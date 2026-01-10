@@ -13,7 +13,9 @@ bash <(curl -s https://raw.githubusercontent.com/tpdhd/claude-setup/master/insta
 ./install-dsp-flag.sh
 ```
 
-After installation, use `claude --dsp` instead of `claude --dangerously-skip-permissions`. See **[DSP-FLAG-IMPLEMENTATION.md](./DSP-FLAG-IMPLEMENTATION.md)** for details.
+After installation, use `claude --dsp` instead of `claude --dangerously-skip-permissions`.
+
+**TROUBLESHOOTING:** If the flag "keeps resetting" or "stops working after a while", see **[DSP-FLAG-SOLUTION.md](./DSP-FLAG-SOLUTION.md)** for the root cause and permanent fix.
 
 ## 📁 Contents
 
@@ -27,8 +29,10 @@ After installation, use `claude --dsp` instead of `claude --dangerously-skip-per
 
 ### Platform-Specific
 - **[SOUND-SETUP.md](./SOUND-SETUP.md)** - 🔊 Sound Notification Hooks für Termux/Android
-- **[DSP-FLAG-IMPLEMENTATION.md](./DSP-FLAG-IMPLEMENTATION.md)** - **PERMANENT** DSP Flag Implementation (wrapper method)
+- **[DSP-FLAG-SOLUTION.md](./DSP-FLAG-SOLUTION.md)** - **PERMANENT FIX** for --dsp flag resetting issues (WSL2/Windows)
+- **[DSP-FLAG-IMPLEMENTATION.md](./DSP-FLAG-IMPLEMENTATION.md)** - Complete DSP Flag Implementation guide (all methods)
 - **[AI-IMPLEMENTATION-GUIDE.md](./AI-IMPLEMENTATION-GUIDE.md)** - 🤖 AI Guide for implementing --dsp flag
 - **[install-dsp-flag.sh](./install-dsp-flag.sh)** - Automated installer for --dsp flag
 - **[verify-dsp.sh](./verify-dsp.sh)** - Verification script for --dsp flag
 - **[WINDOWS-CURSOR-EXPLORER.md](./WINDOWS-CURSOR-EXPLORER.md)** - 🪟 Windows: Cursor aus Explorer Adresszeile starten (ohne CMD-Fenster)
+- **[sound-hooks/](./sound-hooks/)** - Sound notification scripts (.claude-synth-*.sh, .claude-tone-*.sh)
