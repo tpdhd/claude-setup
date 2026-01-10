@@ -27,7 +27,7 @@ claude -p "create a hello world script" > script.sh              # Save output t
 
 The `--dsp` flag is a shorthand for `--dangerously-skip-permissions`. It's not built-in and must be configured.
 
-**See:** [DSP-FLAG-IMPLEMENTATION.md](./DSP-FLAG-IMPLEMENTATION.md) for complete setup instructions.
+**See:** [DSP-FLAG-GUIDE.md](./DSP-FLAG-GUIDE.md) for complete setup instructions.
 
 ### Quick Setup (Bash Function Method)
 
@@ -166,7 +166,7 @@ npm update -g @anthropic-ai/claude-code
 
 **Problem:** The --dsp flag hasn't been configured
 
-**Solution:** Follow setup in [DSP-FLAG-IMPLEMENTATION.md](./DSP-FLAG-IMPLEMENTATION.md)
+**Solution:** Follow setup in [DSP-FLAG-GUIDE.md](./DSP-FLAG-GUIDE.md)
 
 ### Permission errors
 
@@ -179,7 +179,7 @@ npm update -g @anthropic-ai/claude-code
 ## Summary
 
 - **Built-in flags:** `--dangerously-skip-permissions`, `--version`, `--help`
-- **Custom flag:** `--dsp` (requires setup, see DSP-FLAG-IMPLEMENTATION.md)
+- **Custom flag:** `--dsp` (requires setup, see DSP-FLAG-GUIDE.md)
 - **Custom aliases:** Create your own shortcuts as needed
 - **Chaining:** Claude works great with Unix pipes and redirects
 
