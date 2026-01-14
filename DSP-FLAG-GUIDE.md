@@ -14,6 +14,68 @@ After implementation:
 
 ---
 
+## Quick Diagnostic (Is It Working?)
+
+If your `--dsp` flag stopped working, run this diagnostic to identify the issue:
+
+```bash
+echo "=== DSP Flag Diagnostic ==="
+
+# Check 1: Does the wrapper script exist?
+if [ -f ~/.local/bin/claude ]; then
+    echo "✓ Wrapper script EXISTS at ~/.local/bin/claude"
+else
+    echo "✗ Wrapper script MISSING - this is your problem!"
+    echo "  Fix: Re-run the installer below or create the wrapper manually"
+fi
+
+# Check 2: Is the wrapper executable?
+if [ -x ~/.local/bin/claude ]; then
+    echo "✓ Wrapper is executable"
+else
+    echo "✗ Wrapper is NOT executable"
+    echo "  Fix: chmod +x ~/.local/bin/claude"
+fi
+
+# Check 3: Is ~/.local/bin in PATH?
+if echo "$PATH" | grep -q "$HOME/.local/bin"; then
+    echo "✓ ~/.local/bin is in PATH"
+else
+    echo "✗ ~/.local/bin is NOT in PATH"
+    echo "  Fix: Add to ~/.bashrc: export PATH=\"\$HOME/.local/bin:\$PATH\""
+fi
+
+# Check 4: Which claude is being used?
+WHICH_CLAUDE=$(which claude 2>/dev/null)
+if [ "$WHICH_CLAUDE" = "$HOME/.local/bin/claude" ]; then
+    echo "✓ Wrapper is found FIRST in PATH"
+else
+    echo "⚠ Real claude found first: $WHICH_CLAUDE"
+    echo "  The wrapper exists but PATH order is wrong"
+fi
+
+# Check 5: Can wrapper find real claude?
+if [ -f ~/.local/bin/claude ]; then
+    ~/.local/bin/claude --version >/dev/null 2>&1 && echo "✓ Wrapper can find real claude" || echo "✗ Wrapper cannot find real claude"
+fi
+
+echo ""
+echo "=== Most Common Issue ==="
+echo "If wrapper is MISSING but PATH is configured, you have an incomplete setup."
+echo "The PATH line may exist in ~/.bashrc but the actual script was never created."
+```
+
+### Common Diagnostic Results
+
+| Wrapper Exists | PATH Configured | Which Claude | Problem | Solution |
+|----------------|-----------------|--------------|---------|----------|
+| ✗ No | ✓ Yes | npm path | **Incomplete setup** - wrapper never created | Re-run installer |
+| ✓ Yes | ✗ No | npm path | PATH not configured | Add PATH to ~/.bashrc |
+| ✓ Yes | ✓ Yes | npm path | PATH order wrong | Move ~/.local/bin to front of PATH |
+| ✓ Yes | ✓ Yes | wrapper | Working correctly | No action needed |
+
+---
+
 ## Quick Installation (One-Command Method)
 
 ### Automated Installation
@@ -353,6 +415,60 @@ Real Claude runs with full flag
 ---
 
 ## Troubleshooting
+
+### Issue: Wrapper script is MISSING (Most Common!)
+
+**Symptom:** `--dsp` stopped working. PATH has `~/.local/bin` configured but `which claude` shows the npm path.
+
+**Cause:** The wrapper script at `~/.local/bin/claude` was never created, was accidentally deleted, or the installation was interrupted. You may see a comment in `.bashrc` like `# Add ~/.local/bin to PATH (for Claude --dsp wrapper)` but the actual wrapper file doesn't exist.
+
+**Diagnosis:**
+```bash
+# Check if wrapper exists
+ls -la ~/.local/bin/claude
+# If "No such file" - this is your problem!
+
+# Check if PATH is configured (this may show the comment exists)
+grep -i "local/bin" ~/.bashrc
+```
+
+**Fix:** Re-run the one-command installer from the Quick Installation section, or manually create the wrapper:
+
+```bash
+# Create the wrapper script
+cat > ~/.local/bin/claude << 'EOF'
+#!/bin/bash
+REAL_CLAUDE=""
+for dir in $(echo "$PATH" | tr ':' '\n'); do
+    if [ "$dir" != "$HOME/.local/bin" ] && [ -x "$dir/claude" ]; then
+        REAL_CLAUDE="$dir/claude"
+        break
+    fi
+done
+if [ -z "$REAL_CLAUDE" ]; then
+    echo "Error: Could not find real claude binary" >&2
+    exit 1
+fi
+ARGS=()
+for arg in "$@"; do
+    if [ "$arg" = "--dsp" ]; then
+        ARGS+=("--dangerously-skip-permissions")
+    else
+        ARGS+=("$arg")
+    fi
+done
+exec "$REAL_CLAUDE" "${ARGS[@]}"
+EOF
+
+chmod +x ~/.local/bin/claude
+```
+
+**Prevention:** To prevent accidental deletion, keep a backup:
+```bash
+cp ~/.local/bin/claude ~/.local/bin/claude.backup
+```
+
+---
 
 ### Issue: "which claude" shows npm path, not wrapper
 
